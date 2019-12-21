@@ -12,6 +12,7 @@ try:
 except ImportError:
     MPI = None
 
+
 class Model(object):
     """
     We use this object to :
@@ -111,7 +112,6 @@ class Model(object):
         ratio = tf.exp(OLDNEGLOGPAC1 - neglogpac)
         ratio_adv = tf.exp(OLDNEGLOGPAC2 - neglogpac_adv)
 
-        # Defining Loss = - J is equivalent to max J
         pg_losses = ADV1 * ratio
         pg_losses2 = ADV1 * tf.clip_by_value(ratio, 1.0 - CLIPRANGE, 1.0 + CLIPRANGE)
         pg_loss = -tf.reduce_mean(tf.minimum(pg_losses, pg_losses2))
