@@ -179,7 +179,7 @@ class Model(object):
         self.pro_step = act_model.step
         self.adv_step = act_adv.step
         self.pro_value = act_model.value
-        self.adv_alue = act_adv.value
+        self.adv_value = act_adv.value
 
         self.initial_state = act_model.initial_state
 
