@@ -6,6 +6,7 @@ import gym
 from collections import defaultdict
 import tensorflow as tf
 import numpy as np
+import argparse
 
 from baselines.common.vec_env import VecFrameStack, VecNormalize, VecEnv
 from baselines.common.vec_env.vec_video_recorder import VecVideoRecorder
@@ -109,10 +110,11 @@ def build_env(args):
         config.gpu_options.allow_growth = True
         get_session(config=config)
 
+        # Todo: flatten_dict_observations = alg not in {'her', 'ppo2'}
         flatten_dict_observations = alg not in {'her'}
         env = make_vec_env(env_id, env_type, args.num_env or 1, seed, reward_scale=args.reward_scale, flatten_dict_observations=flatten_dict_observations)
 
-        if env_type == 'mujoco':
+        if env_type == 'mujoco' or 'user':
             env = VecNormalize(env, use_tf=True)
 
     return env
@@ -247,4 +249,18 @@ def main(args):
     return model
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                     description='ARL')
+
+    # # parser.add_argument('--env', help='environment ID', default='CartPole-v0')
+    parser.add_argument('--env', help='environment ID', default='CentralDecision-v0')
+    parser.add_argument('--alg', help='algorithm ID', default='ppo2')
+    parser.add_argument('--num_timesteps', help='total timesteps', default=1e6)
+    # parser.add_argument('--seed', help='RNG seed', type=int, default=None)            # 千万别设置0，否则生成的随机数一样
+    parser.add_argument('--play', help='Run trained model', type=int, default=1)
+    # parser.add_argument('--mode', help='learning rate between two agent', default='linear')  # constant linear and asym
+    args = parser.parse_args()
+    # print(sys.argv)
+    # print(args)
+    # main(args)
     main(sys.argv)
