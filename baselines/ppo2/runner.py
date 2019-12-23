@@ -45,7 +45,6 @@ class Runner(AbstractEnvRunner):
             # Take actions in env and look the results
             # Infos contains a ton of useful informations
             actions = np.append(pro_actions, adv_actions)
-            actions = [0, 0, 0]
             self.obs[:], rewards, self.dones, infos = self.env.step(actions)
 
             for info in infos:

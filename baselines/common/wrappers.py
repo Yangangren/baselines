@@ -22,7 +22,11 @@ class ClipActionsWrapper(gym.Wrapper):
     def step(self, action):
         import numpy as np
         action = np.nan_to_num(action)
-        action = np.clip(action, self.action_space.low, self.action_space.high)
+
+        action[0] = np.clip(action[0], self.action_space.low, self.action_space.high)
+        action[1:] = np.clip(action[1:], self.adv_action_space.low, self.adv_action_space.high)
+
+        # action = np.clip(action, self.action_space.low, self.action_space.high)
         return self.env.step(action)
 
     def reset(self, **kwargs):

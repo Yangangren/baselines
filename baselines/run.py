@@ -260,7 +260,4 @@ if __name__ == '__main__':
     parser.add_argument('--play', help='Run trained model', type=int, default=1)
     # parser.add_argument('--mode', help='learning rate between two agent', default='linear')  # constant linear and asym
     args = parser.parse_args()
-    # print(sys.argv)
-    # print(args)
-    # main(args)
     main(sys.argv)

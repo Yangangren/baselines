@@ -26,7 +26,7 @@ class Model(object):
     save/load():
     - Save load the model
     """
-    def __init__(self, *, policy, ob_space, ac_space, nbatch_act, nbatch_train,
+    def __init__(self, *, pro_policy, adv_policy, ob_space, ac_space, nbatch_act, nbatch_train,
                 nsteps, ent_coef, vf_coef, max_grad_norm, mpi_rank_weight=1, comm=None, microbatch_size=None):
         self.sess = sess = get_session()
 
@@ -36,23 +36,23 @@ class Model(object):
         with tf.variable_scope('ppo2_model', reuse=tf.AUTO_REUSE):
             # CREATE OUR TWO MODELS
             # act_model that is used for sampling
-            act_model = policy(nbatch_act, 1, sess)
+            act_model = pro_policy(nbatch_act, 1, sess)
 
             # Train model for training
             if microbatch_size is None:
-                train_model = policy(nbatch_train, nsteps, sess)
+                train_model = pro_policy(nbatch_train, nsteps, sess)
             else:
-                train_model = policy(microbatch_size, nsteps, sess)
+                train_model = pro_policy(microbatch_size, nsteps, sess)
 
         with tf.variable_scope('ppo2_adv', reuse=tf.AUTO_REUSE):
             # CREATE OUR TWO MODELS
             # act_model that is used for sampling
-            act_adv = policy(nbatch_act, 1, sess)
+            act_adv = adv_policy(nbatch_act, 1, sess)
             # Train model for training
             if microbatch_size is None:
-                train_adv = policy(nbatch_train, nsteps, sess)
+                train_adv = adv_policy(nbatch_train, nsteps, sess)
             else:
-                train_adv = policy(microbatch_size, nsteps, sess)
+                train_adv = adv_policy(microbatch_size, nsteps, sess)
 
         # CREATE THE PLACEHOLDERS
         # actions
