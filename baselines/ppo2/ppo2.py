@@ -22,7 +22,7 @@ def constfn(val):
 
 def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2048, ent_coef=0.0, lr=3e-4,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
-            log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
+            log_interval=10, nminibatches=32, noptepochs=10, cliprange=0.2,
             save_interval=50, load_path=None, model_fn=None, update_fn=None, init_fn=None, mpi_rank_weight=1, comm=None, **network_kwargs):
     '''
     Learn policy using PPO algorithm (https://arxiv.org/abs/1707.06347)
@@ -157,50 +157,34 @@ def learn(*, network, env, total_timesteps, eval_env = None, seed=None, nsteps=2
 
         # Here what we're going to do is for each minibatch calculate the loss and append it.
         pro_mblossvals = []
-        if states is None: # nonrecurrent version
-            # Index of each element of batch_size
-            # Create the indices array
-            inds = np.arange(nbatch)
-            for _ in range(noptepochs):
-                # Randomize the indexes
-                np.random.shuffle(inds)
-                # 0 to batch_size with batch_train_size step
-                for start in range(0, nbatch, nbatch_train):
-                    end = start + nbatch_train
-                    mbinds = inds[start:end]
-                    slices = (arr[mbinds] for arr in (obs, pro_returns, masks, pro_actions, pro_values, pro_neglogpacs))
-                    pro_mblossvals.append(model.pro_train(lrnow, cliprangenow, *slices))
-        else: # recurrent version
-            assert nenvs % nminibatches == 0
-            envsperbatch = nenvs // nminibatches
-            envinds = np.arange(nenvs)
-            flatinds = np.arange(nenvs * nsteps).reshape(nenvs, nsteps)
-            for _ in range(noptepochs):
-                np.random.shuffle(envinds)
-                for start in range(0, nenvs, envsperbatch):
-                    end = start + envsperbatch
-                    mbenvinds = envinds[start:end]
-                    mbflatinds = flatinds[mbenvinds].ravel()
-                    slices = (arr[mbflatinds] for arr in (obs, pro_returns, masks, pro_actions, pro_values, pro_neglogpacs))
-                    mbstates = states[mbenvinds]
-                    pro_mblossvals.append(model.train(lrnow, cliprangenow, fflag, *slices, mbstates))
 
+        # Index of each element of batch_size
+        # Create the indices array
+        inds = np.arange(nbatch)
+        for _ in range(noptepochs):
+            # Randomize the indexes
+            np.random.shuffle(inds)
+            # 0 to batch_size with batch_train_size step
+            for start in range(0, nbatch, nbatch_train):
+                end = start + nbatch_train
+                mbinds = inds[start:end]
+                slices = (arr[mbinds] for arr in (obs, pro_returns, masks, pro_actions, pro_values, pro_neglogpacs))
+                pro_mblossvals.append(model.pro_train(lrnow, cliprangenow, *slices))
 
         # Here we traing the adversary agent
         adv_mblossvals = []
-        if states is None:
-            # Index of each element of batch_size
-            # Create the indices array
-            inds = np.arange(nbatch)
-            for _ in range(noptepochs):
-                # Randomize the indexes
-                np.random.shuffle(inds)
-                # 0 to batch_size with batch_train_size step
-                for start in range(0, nbatch, nbatch_train):
-                    end = start + nbatch_train
-                    mbinds = inds[start:end]
-                    slices = (arr[mbinds] for arr in (obs, adv_returns, masks, adv_actions, adv_values, adv_neglogpacs))
-                    adv_mblossvals.append(model.adv_train(lrnow, cliprangenow, *slices))
+        # Index of each element of batch_size
+        # Create the indices array
+        inds = np.arange(nbatch)
+        for _ in range(noptepochs):
+            # Randomize the indexes
+            np.random.shuffle(inds)
+            # 0 to batch_size with batch_train_size step
+            for start in range(0, nbatch, nbatch_train):
+                end = start + nbatch_train
+                mbinds = inds[start:end]
+                slices = (arr[mbinds] for arr in (obs, adv_returns, masks, adv_actions, adv_values, adv_neglogpacs))
+                adv_mblossvals.append(model.adv_train(lrnow, cliprangenow, *slices))
 
         # **************************************************************************************************************
         # Feedforward --> get losses --> update
