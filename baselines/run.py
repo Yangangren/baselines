@@ -114,6 +114,8 @@ def build_env(args):
         flatten_dict_observations = alg not in {'her'}
         env = make_vec_env(env_id, env_type, args.num_env or 1, seed, reward_scale=args.reward_scale, flatten_dict_observations=flatten_dict_observations)
 
+        '''NOTE: Mujoco environments require normalization to work properly, 
+        so we wrap them with VecNormalize wrapper.'''
         if env_type == 'mujoco' or 'user':
             env = VecNormalize(env, use_tf=True)
 
@@ -220,11 +222,11 @@ def main(args):
     if args.save_path is not None and rank == 0:
         save_path = osp.expanduser(args.save_path)
         model.save(save_path)
-
+    args.play = 1
     if args.play:
         logger.log("Running trained model")
         obs = env.reset()
-
+        env.render()
         state = model.initial_state if hasattr(model, 'initial_state') else None
         dones = np.zeros((1,))
 
@@ -233,8 +235,9 @@ def main(args):
             if state is not None:
                 actions, _, state, _ = model.step(obs,S=state, M=dones)
             else:
-                actions, _, _, _ = model.step(obs)
-
+                pro_actions, _, _, _ = model.pro_step(obs)
+                adv_actions, _, _, _ = model.adv_step(obs)
+            actions = np.append(pro_actions, adv_actions)
             obs, rew, done, _ = env.step(actions)
             episode_rew += rew[0] if isinstance(env, VecEnv) else rew
             env.render()
